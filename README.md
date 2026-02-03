@@ -6,6 +6,14 @@ As part of the boot.dev's curriculum, I started building a CLI application that 
 A command-line Pokédex that lets you explore Pokémon location areas with pagination.<br>
 Simple concept, but lots of foundational Go patterns.
 
+**What the application does**
+
+The CLI allows users to navigate through Pokémon location areas with commands like:
+- help: display available commands
+- exit: close the application
+- map: show next 20 location areas
+- mapb: show previous 20 location areas (with pagination state management)
+
 **Key architecture decisions**:
 
 🔹 Clean package structure
