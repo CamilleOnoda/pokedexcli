@@ -6,13 +6,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/CamilleOnoda/pokedexcli/internal/pokeapi"
+	pokeapi "github.com/CamilleOnoda/pokedexcli/internal/pokeapi"
 )
 
 type config struct {
-	pokeAPIClient       pokeapi.Client //talking to the PokeAPI client
-	nextLocationURL     *string        //where to go for the map command's next page
-	previousLocationURL *string        //where to go for the map command's previous page
+	pokeClient          pokeapi.PokeAPIClient //talking to the PokeAPI client
+	nextLocationURL     *string               //where to go for the map command's next page
+	previousLocationURL *string               //where to go for the map command's previous page
 }
 
 type cliCommand struct {
@@ -46,8 +46,9 @@ var commands = map[string]cliCommand{
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
-	cfg := config{
-		pokeAPIClient: pokeapi.NewClient(5 * time.Second),
+	client := pokeapi.NewClient(5 * time.Second)
+	cfg := &config{
+		pokeClient: client,
 	}
 
 	for {
@@ -62,7 +63,7 @@ func main() {
 		if !ok {
 			fmt.Print("Unknown command")
 		} else {
-			if err := value.callback(&cfg); err != nil {
+			if err := value.callback(cfg); err != nil {
 				fmt.Printf("Error executing command: %v\n", err)
 			}
 		}
@@ -82,7 +83,7 @@ func commandHelp(cfg *config) error {
 }
 
 func commandMap(cfg *config) error {
-	locationsResp, err := cfg.pokeAPIClient.GetLocationAreas(cfg.nextLocationURL)
+	locationsResp, err := cfg.pokeClient.GetLocationAreas(cfg.nextLocationURL)
 	if err != nil {
 		return fmt.Errorf("Error fetching location areas: %w", err)
 	}
@@ -103,7 +104,7 @@ func commandMapb(cfg *config) error {
 		return nil
 	}
 
-	locationsResp, err := cfg.pokeAPIClient.GetLocationAreas(cfg.previousLocationURL)
+	locationsResp, err := cfg.pokeClient.GetLocationAreas(cfg.previousLocationURL)
 	if err != nil {
 		return fmt.Errorf("Error fetching location areas: %w", err)
 	}
