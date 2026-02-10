@@ -41,15 +41,16 @@ func TestCleanInput(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		actual := cleanInput(test.input)
-		if len(actual) != len(test.expected) {
-			t.Errorf("Input: %v | Expected: %v | Got: %v", test.input, test.expected, actual)
-		}
-		for i := range actual {
-			if actual[i] != test.expected[i] {
-				t.Errorf("Expected: %v | Got: %v", test.expected[i], actual[i])
+		t.Run(test.name, func(t *testing.T) {
+			actual := cleanInput(test.input)
+			if len(actual) != len(test.expected) {
+				t.Errorf("Input: %v | Expected: %v | Got: %v", test.input, test.expected, actual)
 			}
-		}
-
+			for i := range actual {
+				if actual[i] != test.expected[i] {
+					t.Errorf("Expected: %v | Got: %v", test.expected[i], actual[i])
+				}
+			}
+		})
 	}
 }
