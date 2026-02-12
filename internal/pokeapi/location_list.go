@@ -20,7 +20,7 @@ func (c *Client) GetLocationAreas(pageURL *string) (LocationAreaResponse, error)
 
 	if cachedData, found := c.cache.Get(cacheKey); found {
 		elapsed := time.Since(cacheStart)
-		fmt.Printf("CACHE HIT: retrieved data from cache in %v\n", elapsed)
+		fmt.Printf("CACHE HIT: retrieved data from cache in %v\n\n", elapsed)
 		var cachedResponse LocationAreaResponse
 		if err := json.Unmarshal(cachedData, &cachedResponse); err == nil {
 			return cachedResponse, nil
@@ -49,7 +49,7 @@ func (c *Client) GetLocationAreas(pageURL *string) (LocationAreaResponse, error)
 		return LocationAreaResponse{}, err
 	}
 
-	c.cache.Add(cacheKey, body) // Cache the raw JSON bytes
+	c.cache.Add(cacheKey, body)
 
 	if err := json.Unmarshal(body, &locationAreaResponse); err != nil {
 		err := fmt.Errorf("Error unmarshaling JSON response: %w", err)
@@ -57,7 +57,7 @@ func (c *Client) GetLocationAreas(pageURL *string) (LocationAreaResponse, error)
 	}
 
 	elapsed := time.Since(reqStart)
-	fmt.Printf("API CALL: fetched data from API in %v\n", elapsed)
+	fmt.Printf("API CALL: fetched data from API in %v\n\n", elapsed)
 
 	return locationAreaResponse, nil
 
