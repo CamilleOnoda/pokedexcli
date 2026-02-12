@@ -1,6 +1,7 @@
 package pokeapi
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -9,6 +10,9 @@ import (
 
 type PokeAPIClient interface {
 	GetLocationAreas(pageURL *string) (LocationAreaResponse, error)
+	GetPokemonInLocationArea(pageURL *string) (PokemonInLocationResponse, error)
+	GetPokemonNamesInLocationArea(areaName string) (PokemonInLocationResponse, error)
+	GetPokemonInfo(pokemonName string) (Pokemon, error)
 }
 
 type Client struct {
@@ -23,4 +27,11 @@ func NewClient(timeout time.Duration) *Client {
 		},
 		cache: pokecache.NewCache(10 * time.Minute),
 	}
+}
+
+func (c *Client) GetPokemonNamesInLocationArea(areaName string) (PokemonInLocationResponse, error) {
+	const baseURL = "https://pokeapi.co/api/v2"
+	url := fmt.Sprintf("%s/location-area/%s/", baseURL, areaName)
+
+	return c.GetPokemonInLocationArea(&url)
 }
