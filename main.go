@@ -173,13 +173,11 @@ func commandExplore(cfg *config, areaName string) error {
 	fmt.Printf("Exploring %s...\n\n", areaName)
 	url, err := cfg.pokeClient.BuildURLPokemonInLocationArea(areaName)
 	if err != nil {
-		return fmt.Errorf("Error building URL for location area '%s'\n"+
-			"%w", areaName, err)
+		return fmt.Errorf("Error building URL for location area '%s': %w", areaName, err)
 	}
 	pokemonResp, err := cfg.pokeClient.GetPokemonInLocationArea(url)
 	if err != nil {
-		return fmt.Errorf("Error fetching Pokemon in location area '%s'\n"+
-			"%w", areaName, err)
+		return fmt.Errorf("Error fetching Pokemon in location area '%s': %w", areaName, err)
 	}
 
 	if len(pokemonResp.PokemonEncounters) == 0 {
@@ -234,8 +232,7 @@ func commandInspect(cfg *config, pokemonName string) error {
 
 	pokemon, err := cfg.pokeClient.GetPokemonInfo(pokemonName)
 	if err != nil {
-		return fmt.Errorf("Error fetching Pokemon '%s'\n"+
-			"%w", pokemonName, err)
+		return fmt.Errorf("Error fetching Pokemon '%s': %w", pokemonName, err)
 	}
 
 	fmt.Printf("Name: %s\n", pokemon.Name)
