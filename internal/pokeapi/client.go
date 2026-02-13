@@ -1,6 +1,8 @@
 package pokeapi
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -26,4 +28,27 @@ func NewClient(timeout time.Duration) *Client {
 		},
 		cache: pokecache.NewCache(10 * time.Minute),
 	}
+}
+
+func (c *Client) FetchData(url string) ([]byte, error) {
+	resp, err := c.httpClient.Get(url)
+	if err != nil {
+		err := fmt.Errorf("Error making GET request to %s: %w", url, err)
+		return []byte{}, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		err := fmt.Errorf("Received a non-OK HTTP status code: %d", resp.StatusCode)
+		return []byte{}, err
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		err := fmt.Errorf("Error reading response body: %w", err)
+		return []byte{}, err
+	}
+
+	return body, nil
 }
