@@ -74,6 +74,9 @@ func main() {
 		caughtPokemon: make(map[string]pokeapi.Pokemon),
 	}
 
+	fmt.Printf("\nWelcome to the Pokedex!\n" +
+		"Enter 'help' to see available commands.\n\n")
+
 	for {
 		fmt.Print("Pokedex > ")
 		scanner.Scan()
@@ -104,8 +107,24 @@ func commandExit(cfg *config, args string) error {
 }
 
 func commandHelp(cfg *config, args string) error {
-	fmt.Print("Welcome to the Pokedex!\nUsage:\n\nhelp: Displays a help message" +
-		"\nexit: Exit the Pokedex\n")
+	fmt.Print(
+		"Usage:\n\n" +
+			"	Pokedex > map\n" +
+			"		Displays a list of 20 location areas in the Pokemon world\n\n" +
+			"	Pokedex > mapb\n" +
+			"		Displays a list of the previous 20 location areas in the Pokemon world\n\n" +
+			"	Pokedex > explore <location-area-name>\n" +
+			"		See a list of all the Pokemon located in a specific location area\n\n" +
+			"	Pokedex > catch <pokemon-name>\n" +
+			"		Catch a Pokemon and add it to your Pokedex\n\n" +
+			"	Pokedex > inspect <pokemon-name>\n" +
+			"		View detailed information about a specific Pokemon\n\n" +
+			"	Pokedex > pokedex\n" +
+			"		View all the Pokemon you have caught so far\n\n" +
+			"	Pokedex > help\n" +
+			"		Displays a help message\n\n" +
+			"	Pokedex > exit\n" +
+			"		Exit the Pokedex\n")
 	return nil
 }
 
