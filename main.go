@@ -94,7 +94,7 @@ func main() {
 				arg = cleanedInput[1]
 			}
 			if err := value.callback(cfg, arg); err != nil {
-				fmt.Printf("Error executing command: %v\n", err)
+				fmt.Printf("Cannot execute command '%s': %v\n", value.name, err)
 			}
 		}
 	}
@@ -146,7 +146,7 @@ func commandMap(cfg *config, args string) error {
 
 func commandMapb(cfg *config, args string) error {
 	if cfg.previousLocationURL == nil {
-		fmt.Println("you're on the first page")
+		fmt.Println("You're on the first page")
 		return nil
 	}
 
@@ -171,9 +171,15 @@ func commandExplore(cfg *config, areaName string) error {
 	}
 
 	fmt.Printf("Exploring %s...\n\n", areaName)
-	pokemonResp, err := cfg.pokeClient.GetPokemonNamesInLocationArea(areaName)
+	url, err := cfg.pokeClient.BuildURLPokemonInLocationArea(areaName)
 	if err != nil {
-		return fmt.Errorf("Error fetching Pokemon in location area '%s': %w", areaName, err)
+		return fmt.Errorf("Error building URL for location area '%s'\n"+
+			"%w", areaName, err)
+	}
+	pokemonResp, err := cfg.pokeClient.GetPokemonInLocationArea(url)
+	if err != nil {
+		return fmt.Errorf("Error fetching Pokemon in location area '%s'\n"+
+			"%w", areaName, err)
 	}
 
 	if len(pokemonResp.PokemonEncounters) == 0 {
@@ -199,7 +205,8 @@ func commandCatch(cfg *config, pokemonName string) error {
 
 	pokemon, err := cfg.pokeClient.GetPokemonInfo(pokemonName)
 	if err != nil {
-		return fmt.Errorf("Error fetching Pokemon '%s': %w", pokemonName, err)
+		return fmt.Errorf("Error fetching Pokemon '%s'\n"+
+			"%w", pokemonName, err)
 	}
 
 	if userBaseExperience > pokemon.BaseExperience {
@@ -227,7 +234,8 @@ func commandInspect(cfg *config, pokemonName string) error {
 
 	pokemon, err := cfg.pokeClient.GetPokemonInfo(pokemonName)
 	if err != nil {
-		return fmt.Errorf("Error fetching Pokemon '%s': %w", pokemonName, err)
+		return fmt.Errorf("Error fetching Pokemon '%s'\n"+
+			"%w", pokemonName, err)
 	}
 
 	fmt.Printf("Name: %s\n", pokemon.Name)
