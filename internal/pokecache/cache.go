@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+type Cacheable interface {
+	Get(key string) ([]byte, bool)
+	Add(key string, val []byte)
+	reapLoop(interval time.Duration)
+}
+
 type CacheEntry struct {
 	createdAt time.Time
 	val       []byte
