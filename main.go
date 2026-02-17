@@ -15,6 +15,7 @@ type config struct {
 	nextLocationURL     *string
 	previousLocationURL *string
 	caughtPokemon       map[string]pokeapi.Pokemon
+	caughtCount         pokeapi.CaughtCount
 }
 
 type cliCommand struct {
@@ -72,6 +73,7 @@ func main() {
 	cfg := &config{
 		pokeClient:    client,
 		caughtPokemon: make(map[string]pokeapi.Pokemon),
+		caughtCount:   make(map[string]int),
 	}
 
 	fmt.Printf("\nWelcome to the Pokedex!\n" +
@@ -208,8 +210,15 @@ func commandCatch(cfg *config, pokemonName string) error {
 	}
 
 	if userBaseExperience > pokemon.BaseExperience {
-		cfg.caughtPokemon[pokemonName] = pokemon
-		fmt.Printf("%s was caught!\n\n", pokemonName)
+		if _, exists := cfg.caughtPokemon[pokemonName]; !exists {
+			cfg.caughtPokemon[pokemonName] = pokemon
+		}
+		cfg.caughtCount[pokemonName]++
+		if cfg.caughtCount[pokemonName] == 1 {
+			fmt.Printf("%s was caught!\n\n", pokemonName)
+		} else {
+			fmt.Printf("%s was caught again! Total: %d\n\n", pokemonName, cfg.caughtCount[pokemonName])
+		}
 
 	} else {
 		fmt.Printf("%s escaped!\n\n", pokemonName)
@@ -236,6 +245,7 @@ func commandInspect(cfg *config, pokemonName string) error {
 	}
 
 	fmt.Printf("Name: %s\n", pokemon.Name)
+	fmt.Printf("Times caught: %d\n", cfg.caughtCount[pokemonName])
 	fmt.Printf("ID: %d\n", pokemon.ID)
 	fmt.Printf("Base Experience: %d\n", pokemon.BaseExperience)
 	fmt.Printf("Height: %d\n", pokemon.Height)
