@@ -1,6 +1,5 @@
 package pokeapi
 
-// Service layer to orchestrate API calls and caching
 type Service interface {
 	GetData(url string) ([]byte, error)
 }
@@ -10,7 +9,7 @@ type ServiceImpl struct {
 }
 
 func (s *ServiceImpl) GetData(url string) ([]byte, error) {
-	if cachedData, found := s.client.cache.Get(url); found {
+	if cachedData, found := s.client.Cache.Get(url); found {
 		return cachedData, nil
 	}
 	data, err := s.client.FetchData(url)
@@ -19,6 +18,6 @@ func (s *ServiceImpl) GetData(url string) ([]byte, error) {
 	}
 
 	cacheKey := url
-	s.client.cache.Add(cacheKey, data)
+	s.client.Cache.Add(cacheKey, data)
 	return data, nil
 }
