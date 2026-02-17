@@ -1,6 +1,9 @@
 package pokeapi
 
+type CaughtCount map[string]int
+
 type Pokemon struct {
+	Caught         int
 	ID             int    `json:"id"`
 	Name           string `json:"name"`
 	BaseExperience int    `json:"base_experience"`
