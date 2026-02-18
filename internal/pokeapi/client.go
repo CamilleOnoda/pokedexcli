@@ -1,54 +1,88 @@
 package pokeapi
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
-
-	pokecache "github.com/CamilleOnoda/pokedexcli/internal/pokecache"
 )
-
-type PokeAPIClient interface {
-	GetLocationAreas(pageURL *string) (LocationAreaResponse, error)
-	GetPokemonInLocationArea(pageURL *string) (PokemonInLocationResponse, error)
-	BuildURLPokemonInLocationArea(areaName string) (*string, error)
-	GetPokemonInfo(pokemonName string) (Pokemon, error)
-}
 
 type Client struct {
 	httpClient *http.Client
-	Cache      *pokecache.Cache
+	baseURL    string
 }
 
 func NewClient(timeout time.Duration) *Client {
 	return &Client{
-		httpClient: &http.Client{
-			Timeout: timeout,
-		},
-		Cache: pokecache.NewCache(10 * time.Minute),
+		httpClient: &http.Client{Timeout: timeout},
+		baseURL:    "https://pokeapi.co/api/v2",
 	}
 }
 
-func (c *Client) FetchData(url string) ([]byte, error) {
+func (c *Client) GetLocationAreas(pageURL *string) (LocationAreaResponse, error) {
+	url := c.baseURL + "/location-area"
+	if pageURL != nil {
+		url = *pageURL
+	}
 	resp, err := c.httpClient.Get(url)
 	if err != nil {
-		err := fmt.Errorf("Error making GET request to %s: %w", url, err)
-		return []byte{}, err
+		return LocationAreaResponse{}, fmt.Errorf("Error making GET request: %w", err)
 	}
-
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		err := fmt.Errorf("Received a non-OK HTTP status code: %d", resp.StatusCode)
-		return []byte{}, err
+		return LocationAreaResponse{}, fmt.Errorf("Received status: %w", err)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	var locationResp LocationAreaResponse
+	if err := json.NewDecoder(resp.Body).Decode(&locationResp); err != nil {
+		return LocationAreaResponse{}, fmt.Errorf("Error decoding JSON %w", err)
+	}
+
+	return locationResp, nil
+
+}
+
+func (c *Client) GetPokemonInfo(pokemonName string) (Pokemon, error) {
+	url := c.baseURL + "/pokemon/" + pokemonName + "/"
+
+	resp, err := c.httpClient.Get(url)
 	if err != nil {
-		err := fmt.Errorf("Error reading response body: %w", err)
-		return []byte{}, err
+		return Pokemon{}, fmt.Errorf("Error fetching Pokemon: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return Pokemon{}, fmt.Errorf("Received status: %w", err)
 	}
 
-	return body, nil
+	var pokemon Pokemon
+	if err := json.NewDecoder(resp.Body).Decode(&pokemon); err != nil {
+		return Pokemon{}, fmt.Errorf("Error decoding JSON: %w", err)
+	}
+
+	return pokemon, nil
+
+}
+
+func (c *Client) GetPokemonInLocationArea(areaName *string) (PokemonInLocationResponse, error) {
+	url := fmt.Sprintf("%s/location-area/%v/", c.baseURL, areaName)
+
+	resp, err := c.httpClient.Get(url)
+	if err != nil {
+		return PokemonInLocationResponse{}, fmt.Errorf("Error fetching Pokemon: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return PokemonInLocationResponse{}, fmt.Errorf("Received status: %w", err)
+	}
+
+	var pokemonInLocationResp PokemonInLocationResponse
+	if err := json.NewDecoder(resp.Body).Decode(&pokemonInLocationResp); err != nil {
+		return PokemonInLocationResponse{}, fmt.Errorf("Error decoding JSON: %w", err)
+	}
+
+	return pokemonInLocationResp, nil
+
 }

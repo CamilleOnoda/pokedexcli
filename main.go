@@ -15,7 +15,7 @@ type config struct {
 	nextLocationURL     *string
 	previousLocationURL *string
 	caughtPokemon       map[string]pokeapi.Pokemon
-	caughtCount         pokeapi.CaughtCount
+	caughtCount         map[string]int
 }
 
 type cliCommand struct {
@@ -69,7 +69,20 @@ var commands = map[string]cliCommand{
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
-	client := pokeapi.NewClient(5 * time.Second)
+
+	useCache := os.Getenv("USE_CACHE") != "FALSE"
+
+	httpClient := pokeapi.NewClient(5 * time.Second)
+
+	var client pokeapi.PokeAPIClient
+
+	if useCache {
+		cache := pokeapi.NewCache()
+		client = pokeapi.NewCachedClient(httpClient, cache, 5*time.Minute)
+	} else {
+		client = httpClient
+	}
+
 	cfg := &config{
 		pokeClient:    client,
 		caughtPokemon: make(map[string]pokeapi.Pokemon),
@@ -173,11 +186,8 @@ func commandExplore(cfg *config, areaName string) error {
 	}
 
 	fmt.Printf("Exploring %s...\n\n", areaName)
-	url, err := cfg.pokeClient.BuildURLPokemonInLocationArea(areaName)
-	if err != nil {
-		return fmt.Errorf("Error building URL for location area '%s': %w", areaName, err)
-	}
-	pokemonResp, err := cfg.pokeClient.GetPokemonInLocationArea(url)
+
+	pokemonResp, err := cfg.pokeClient.GetPokemonInLocationArea(&areaName)
 	if err != nil {
 		return fmt.Errorf("Error fetching Pokemon in location area '%s': %w", areaName, err)
 	}
