@@ -1,10 +1,12 @@
 package pokeapi
 
+// Wraps any client implementation and add caching
+
 import (
+	"encoding/json"
 	"time"
 )
 
-// Wraps a PokeAPIClient and add caching
 type CachedClient struct {
 	client PokeAPIClient
 	cache  Cache
@@ -22,11 +24,14 @@ func NewCachedClient(client PokeAPIClient, cache Cache, ttl time.Duration) *Cach
 func (c *CachedClient) GetLocationAreas(pageURL *string) (LocationAreaResponse, error) {
 	key := "locations:default"
 	if pageURL != nil {
-		key = "locations" + *pageURL
+		key = "locations:" + *pageURL
 	}
 
 	if cached, found := c.cache.Get(key); found {
-		return cached.(LocationAreaResponse), nil
+		var resp LocationAreaResponse
+		if err := json.Unmarshal(cached, &resp); err == nil {
+			return resp, nil
+		}
 	}
 
 	resp, err := c.client.GetLocationAreas(pageURL)
@@ -34,7 +39,9 @@ func (c *CachedClient) GetLocationAreas(pageURL *string) (LocationAreaResponse, 
 		return LocationAreaResponse{}, err
 	}
 
-	c.cache.Set(key, resp, c.ttl)
+	if data, err := json.Marshal(resp); err == nil {
+		c.cache.Set(key, data, c.ttl)
+	}
 
 	return resp, nil
 
@@ -44,7 +51,10 @@ func (c *CachedClient) GetPokemonInfo(pokemonName string) (Pokemon, error) {
 	key := "pokemon:" + pokemonName
 
 	if cached, found := c.cache.Get(key); found {
-		return cached.(Pokemon), nil
+		var resp Pokemon
+		if err := json.Unmarshal(cached, &resp); err == nil {
+			return resp, nil
+		}
 	}
 
 	resp, err := c.client.GetPokemonInfo(pokemonName)
@@ -52,7 +62,9 @@ func (c *CachedClient) GetPokemonInfo(pokemonName string) (Pokemon, error) {
 		return Pokemon{}, err
 	}
 
-	c.cache.Set(key, resp, c.ttl)
+	if data, err := json.Marshal(resp); err == nil {
+		c.cache.Set(key, data, c.ttl)
+	}
 
 	return resp, nil
 
@@ -66,15 +78,23 @@ func (c *CachedClient) GetPokemonInLocationArea(areaURL *string) (PokemonInLocat
 	key := "location:" + *areaURL
 
 	if cached, found := c.cache.Get(key); found {
-		return cached.(PokemonInLocationResponse), nil
+		var resp PokemonInLocationResponse
+		if err := json.Unmarshal(cached, &resp); err == nil {
+			return resp, nil
+		}
 	}
 
 	resp, err := c.client.GetPokemonInLocationArea(areaURL)
 	if err != nil {
 		return PokemonInLocationResponse{}, err
 	}
-
-	c.cache.Set(key, resp, c.ttl)
+	if data, err := json.Marshal(resp); err == nil {
+		c.cache.Set(key, data, c.ttl)
+	}
 
 	return resp, nil
+}
+
+func (c *CachedClient) Clear() {
+	c.cache.Clear()
 }
