@@ -1,7 +1,5 @@
 package pokeapi
 
-type CaughtCount map[string]int
-
 type Pokemon struct {
 	Caught         int
 	ID             int    `json:"id"`
@@ -23,4 +21,16 @@ type Pokemon struct {
 			URL  string `json:"url"`
 		}
 	} `json:"types"`
+}
+
+type PokemonInLocationResponse struct {
+	ID                int    `json:"id"`
+	Name              string `json:"name"`
+	GameIndex         int    `json:"game_index"`
+	PokemonEncounters []struct {
+		Pokemon struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"pokemon"`
+	} `json:"pokemon_encounters"`
 }
