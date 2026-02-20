@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -65,6 +66,11 @@ var commands = map[string]cliCommand{
 		description: "View all the Pokemon you have caught so far",
 		callback:    commandPokedex,
 	},
+	"clear": {
+		name:        "clear",
+		description: "Clear your Pokedex",
+		callback:    commandClear,
+	},
 }
 
 func main() {
@@ -72,15 +78,22 @@ func main() {
 
 	useCache := os.Getenv("USE_CACHE") != "FALSE"
 
+	// Create pure HTTP client
 	httpClient := pokeapi.NewClient(5 * time.Second)
 
 	var client pokeapi.PokeAPIClient
 
 	if useCache {
-		cache := pokeapi.NewCache()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		cleanupInterval := 10 * time.Minute
+		cache := pokeapi.NewCache(ctx, cleanupInterval)
+
 		client = pokeapi.NewCachedClient(httpClient, cache, 5*time.Minute)
+		fmt.Println("✅ Cache enabled")
 	} else {
 		client = httpClient
+		fmt.Println("⚠️ Cache disabled")
 	}
 
 	cfg := &config{
@@ -138,6 +151,8 @@ func commandHelp(cfg *config, args string) error {
 			"		View all the Pokemon you have caught so far\n\n" +
 			"	Pokedex > help\n" +
 			"		Displays a help message\n\n" +
+			"	Pokedex > clear\n" +
+			"		Clear your Pokedex\n\n" +
 			"	Pokedex > exit\n" +
 			"		Exit the Pokedex\n")
 	return nil
@@ -282,5 +297,11 @@ func commandPokedex(cfg *config, args string) error {
 	for _, pokemon := range cfg.caughtPokemon {
 		fmt.Printf("- %s\n\n", pokemon.Name)
 	}
+	return nil
+}
+
+func commandClear(cfg *config, args string) error {
+	cfg.pokeClient.Clear()
+	fmt.Printf("Your Pokedex has been cleared\n\n")
 	return nil
 }
