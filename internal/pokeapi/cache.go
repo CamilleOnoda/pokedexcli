@@ -1,21 +1,22 @@
 package pokeapi
 
+// Stores data with expiration (TTL)
+
 import (
+	"context"
 	"sync"
 	"time"
 )
 
 type Cache interface {
-	Get(key string) (interface{}, bool)
-	Set(key string, val interface{}, ttl time.Duration)
+	Get(key string) ([]byte, bool)
+	Set(key string, val []byte, ttl time.Duration)
 	Clear()
-	cleanupExpired()
-	removeEpired()
 }
 
 type cacheEntry struct {
 	expiresAt time.Time
-	value     interface{}
+	value     []byte
 }
 
 type InMemoryCache struct {
@@ -23,25 +24,25 @@ type InMemoryCache struct {
 	mu   sync.RWMutex
 }
 
-func NewCache() *InMemoryCache {
+func NewCache(ctx context.Context, cleanupInterval time.Duration) *InMemoryCache {
 	cache := &InMemoryCache{
 		data: make(map[string]cacheEntry),
 	}
-	go cache.cleanupExpired()
+	go cache.cleanupExpired(ctx, cleanupInterval)
 	return cache
 }
 
-func (c *InMemoryCache) Get(key string) (interface{}, bool) {
+func (c *InMemoryCache) Get(key string) ([]byte, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	val, ok := c.data[key]
-	if !ok {
+	entry, ok := c.data[key]
+	if !ok || time.Now().After(entry.expiresAt) {
 		return nil, false
 	}
-	return val.value, true
+	return entry.value, true
 }
 
-func (c *InMemoryCache) Set(key string, val interface{}, ttl time.Duration) {
+func (c *InMemoryCache) Set(key string, val []byte, ttl time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -52,16 +53,20 @@ func (c *InMemoryCache) Set(key string, val interface{}, ttl time.Duration) {
 
 }
 
-func (c *InMemoryCache) cleanupExpired() {
-	ticker := time.NewTicker(5 * time.Minute)
+func (c *InMemoryCache) cleanupExpired(ctx context.Context, interval time.Duration) {
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
-
-	for range ticker.C {
-		c.removeEpired()
+	for {
+		select {
+		case <-ticker.C:
+			c.removeExpired()
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
-func (c *InMemoryCache) removeEpired() {
+func (c *InMemoryCache) removeExpired() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
