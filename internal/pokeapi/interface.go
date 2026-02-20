@@ -7,4 +7,5 @@ type PokeAPIClient interface {
 	GetLocationAreas(pageURL *string) (LocationAreaResponse, error)
 	GetPokemonInfo(pokemonName string) (Pokemon, error)
 	GetPokemonInLocationArea(areaName *string) (PokemonInLocationResponse, error)
+	Clear()
 }
