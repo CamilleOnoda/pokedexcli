@@ -1,5 +1,7 @@
 package pokeapi
 
+// Makes HTTP requests ONLY (no caching logic)
+
 import (
 	"encoding/json"
 	"fmt"
@@ -86,3 +88,5 @@ func (c *Client) GetPokemonInLocationArea(areaName *string) (PokemonInLocationRe
 	return pokemonInLocationResp, nil
 
 }
+
+func (c *Client) Clear() {}
