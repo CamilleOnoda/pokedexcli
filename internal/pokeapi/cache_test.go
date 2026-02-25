@@ -28,8 +28,10 @@ func TestSetAndGet(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
+
 			cleanupInterval := 100 * time.Millisecond
 			cache := NewCache(ctx, cleanupInterval)
+
 			cache.Set(test.key, test.value, ttl)
 			cachedValue, found := cache.Get(test.key)
 			if !found {
@@ -82,7 +84,7 @@ func TestGetExpired(t *testing.T) {
 
 			cachedValue, found := cache.Get(test.key)
 			if !found {
-				t.Errorf("Expected to find key'%s' in cache", test.key)
+				t.Errorf("Expected to find key '%s' in cache", test.key)
 				return
 			} else if string(cachedValue) != string(test.value) {
 				t.Errorf("Expected value '%s', got '%s'", string(test.value), string(cachedValue))
