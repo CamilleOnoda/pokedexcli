@@ -1,14 +1,15 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"time"
 
 	pokeapi "github.com/CamilleOnoda/pokedexcli/internal/pokeapi"
+	readline "github.com/chzyer/readline"
 )
 
 type config struct {
@@ -74,13 +75,17 @@ var commands = map[string]cliCommand{
 }
 
 func main() {
-	scanner := bufio.NewScanner(os.Stdin)
+	rl, err := readline.NewEx(&readline.Config{
+		Prompt:      "Pokedex > ",
+		HistoryFile: os.ExpandEnv("$HOME/.pokedexcli_history"),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rl.Close()
 
 	useCache := os.Getenv("USE_CACHE") != "FALSE"
-
-	// Create pure HTTP client
 	httpClient := pokeapi.NewClient(5 * time.Second)
-
 	var client pokeapi.PokeAPIClient
 
 	if useCache {
@@ -106,10 +111,11 @@ func main() {
 		"Enter 'help' to see available commands.\n\n")
 
 	for {
-		fmt.Print("Pokedex > ")
-		scanner.Scan()
-		userInput := scanner.Text()
-		cleanedInput := cleanInput(userInput)
+		line, err := rl.Readline()
+		if err != nil {
+			break
+		}
+		cleanedInput := cleanInput(line)
 		if len(cleanedInput) == 0 {
 			continue
 		}
@@ -154,7 +160,9 @@ func commandHelp(cfg *config, args string) error {
 			"	Pokedex > clear\n" +
 			"		Clear your Pokedex\n\n" +
 			"	Pokedex > exit\n" +
-			"		Exit the Pokedex\n")
+			"		Exit the Pokedex\n\n" +
+			"	Pokedex > press the up or down arrow\n" +
+			"		Browse through previously typed commands\n\n")
 	return nil
 }
 
