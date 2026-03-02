@@ -1,19 +1,16 @@
-## Building a Pokedex CLI in Go: lessons from boot.dev
+## Pokedex CLI in Go
 
-
-This is a command-line Pokedex written in Go, built as part of the boot.dev curriculum. It interacts with the PokeAPI and demonstrates foundational Go patterns and CLI design.
+This is a command-line Pokedex written in Go. It interacts with the PokeAPI and demonstrates foundational Go patterns, CLI design, and testable architecture.
 
 ---
 
 ## Prerequisites and setup
 
-This project requires [Go](https://golang.org/dl/) (version 1.18 or newer recommended).
-
+This project requires [Go](https://golang.org/dl/) (1.18+ recommended).
 
 1. **Install Go:**
    - Download and install Go from the [official website](https://golang.org/dl/).
-   - Follow the instructions for your operating system.
-   - After installation, open a new terminal and run:
+   - After installation, run:
      ```sh
      go version
      ```
@@ -39,13 +36,14 @@ If you see errors about missing Go or commands not found, double-check your Go i
 
 ---
 
+## Project overview
 
-## The project
-A command-line Pokedex that lets you:
-- Explore Pokemon location areas with pagination
-- Attempt to catch Pokemon and add them to your Pokedex
-- View details about Pokemon you have caught
-
+This CLI lets you:
+- Explore Pokémon location areas with pagination
+- Attempt to catch Pokémon and add them to your Pokedex
+- View and inspect details about Pokémon you have caught
+- List all Pokémon you have caught so far
+- Clear your Pokedex
 
 ### Features and commands
 
@@ -55,10 +53,11 @@ The CLI allows you to:
 - **exit**: Close the application
 - **map**: Show the next 20 location areas (pagination)
 - **mapb**: Show the previous 20 location areas
-- **explore <location>**: List all Pokemon in a specific location area
-- **catch <pokemon>**: Attempt to catch a Pokemon and add it to your Pokedex
-- **inspect <pokemon>**: View details about a Pokemon you have caught
-- **pokedex**: List all Pokemon you have caught so far
+- **explore <location>**: List all Pokémon in a specific location area
+- **catch <pokemon>**: Attempt to catch a Pokémon and add it to your Pokedex
+- **inspect <pokemon>**: View details about a Pokémon you have caught
+- **pokedex**: List all Pokémon you have caught so far
+- **clear**: Clear your Pokedex
 
 Example usage:
 ```
@@ -68,41 +67,44 @@ Pokedex > explore viridian-forest
 Pokedex > catch pikachu
 Pokedex > inspect pikachu
 Pokedex > pokedex
+Pokedex > clear
 Pokedex > exit
 ```
 
 ---
 
+## Architecture and design
 
-## Key architecture decisions
+- **main.go**: Handles user interaction and command routing
+- **internal/pokeapi**: Manages all API communication, caching, and data types
+  - `client.go`: HTTP client for PokeAPI
+  - `cached_client.go`: Adds caching to API requests
+  - `cache.go`: In-memory cache with TTL
+  - `interface.go`: Interface for API clients (enables mocking/testing)
+  - `types_*.go`: Data types for API responses
+- **mock_client.go**: Mock implementation for testing
 
+**Key Patterns:**
+- Centralized application state in a `config` struct
+- Dependency injection for API client (enables easy mocking in tests)
+- Command pattern for extensibility (commands in a map)
+- Constructor pattern for initialization (e.g., `NewClient`)
+- Error wrapping for informative error messages
 
-**Clean package structure**
+---
 
-- `main.go`: Handles user interaction and command routing
-- `internal/pokeapi`: Manages all API communication
-- `internal/pokecache`: In-memory caching layer for API responses
-- Clear separation ensures each component has a distinct responsibility, making the codebase easier to manage and test.
+## Testing
 
-**Configuration as state**
+Unit tests cover input cleaning, cache logic, and command behaviors. Mock clients are used to test CLI logic without real API calls.
 
-Centralized application state is managed in a `config` struct, passed to all commands. This enables stateful pagination and supports dependency injection. Optional parameters are represented using pointer types (such as `*string`).
+- `repl_test.go`: Tests input parsing and cleaning
+- `mock_client_test.go`: Tests catching logic and command behaviors
+- `internal/pokeapi/cache_test.go`: Tests cache set/get and expiration
 
-**Dependency injection pattern**
-
-The API client is injected via the `config` struct, making the code more testable and flexible. This allows for easy mocking in unit tests and supports different configurations for development and production.
-
-**Command pattern for extensibility**
-
-Commands are defined in a map, making it easy to add new commands by simply adding entries. This approach supports scalable growth of the application's functionality.
-
-**Constructor pattern**
-
-Go idioms are followed for initialization (e.g., `NewClient`), encapsulating setup logic and making future changes easier.
-
-**Error handling**
-
-Errors are wrapped using Go’s `%w` error wrapping, preserving the error chain and adding context. This ensures errors are informative and traceable throughout the application.
+To run all tests:
+```sh
+go test ./...
+```
 
 ---
 
@@ -111,3 +113,5 @@ Errors are wrapped using Go’s `%w` error wrapping, preserving the error chain 
 - Add more comprehensive tests (real and mocked HTTP clients)
 - Expand functionality (more commands, richer Pokedex features)
 - Improve CLI UX and error messages
+- **pokedex**: List all Pokemon you have caught so far
+
